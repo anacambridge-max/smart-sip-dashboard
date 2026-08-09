@@ -1,82 +1,10 @@
-export type Point = { date: string; nav: number };
-export type Metrics = {
-  id: number;
-  belowHigh: number; aboveLow: number; rsi: number; weekly: number; monthly: number;
-  ret3m: number; ret6m: number; ma20: number; ma50: number;
-  weeklyRank: number; monthlyRank: number; blendedRank: number;
-  discount: number; opportunity: number; total: number;
-};
-
-const clamp = (x: number, a = 0, b = 100) => Math.max(a, Math.min(b, x));
-const pct = (a: number, b: number) => (b ? ((a - b) / b) * 100 : 0);
-
-function sma(values: number[], n: number) {
-  return values.length < n ? NaN : values.slice(-n).reduce((s, v) => s + v, 0) / n;
-}
-
-export function rsi(values: number[], n = 14) {
-  if (values.length <= n) return 50;
-  let gains = 0, losses = 0;
-  for (let i = values.length - n; i < values.length; i++) {
-    const delta = values[i] - values[i - 1];
-    if (delta >= 0) gains += delta; else losses -= delta;
-  }
-  if (losses === 0) return 100;
-  const rs = (gains / n) / (losses / n);
-  return 100 - 100 / (1 + rs);
-}
-
-function trailing(values: number[], days: number) {
-  return values.length > days ? pct(values.at(-1)!, values[values.length - 1 - days]) : 0;
-}
-
-export function rawMetrics(points: Point[]) {
-  const values = points.map((p) => p.nav).filter(Number.isFinite);
-  const current = values.at(-1) ?? 0;
-  const window = values.slice(-252);
-  const high = Math.max(...window);
-  const low = Math.min(...window);
-  return {
-    belowHigh: high > 0 ? ((high - current) / high) * 100 : 0,
-    aboveLow: low > 0 ? ((current - low) / low) * 100 : 0,
-    rsi: rsi(values),
-    weekly: trailing(values, 7),
-    monthly: trailing(values, 30),
-    ret3m: trailing(values, 63),
-    ret6m: trailing(values, 126),
-    ma20: sma(values, 20),
-    ma50: sma(values, 50),
-  };
-}
-
-export function rankMetrics(all: { id: number; raw: ReturnType<typeof rawMetrics> }[]): Metrics[] {
-  const n = all.length || 1;
-  const rank = (key: keyof ReturnType<typeof rawMetrics>, ascending = false) => {
-    const sorted = [...all].sort((a, b) => {
-      const av = Number(a.raw[key]); const bv = Number(b.raw[key]);
-      return ascending ? av - bv : bv - av;
-    });
-    const map = new Map<number, number>();
-    sorted.forEach((x, i) => map.set(x.id, i + 1));
-    return map;
-  };
-
-  const weeklyRank = rank('weekly', true);   // biggest decline = rank 1 = highest discount
-  const monthlyRank = rank('monthly', true);
-  const r3 = rank('ret3m');
-  const r6 = rank('ret6m');
-
-  return all.map((x) => {
-    const wr = weeklyRank.get(x.id)!;
-    const mr = monthlyRank.get(x.id)!;
-    const blendedRank = ((r3.get(x.id)! + r6.get(x.id)!) / 2);
-    const rankScore = (rankValue: number) => (n - rankValue + 1) / n;
-    const discount = 100 * (0.5 * rankScore(wr) + 0.5 * rankScore(mr));
-    const belowNorm = clamp(x.raw.belowHigh / 50);
-    const rsiSignal = clamp((50 - x.raw.rsi) / 20);
-    const relativeStrength = clamp(rankScore(blendedRank));
-    const opportunity = 100 * (0.4 * belowNorm + 0.3 * rsiSignal + 0.3 * relativeStrength);
-    const total = 0.6 * opportunity + 0.4 * discount;
-    return { id: x.id, ...x.raw, weeklyRank: wr, monthlyRank: mr, blendedRank, discount, opportunity, total };
-  });
-}
+export type Point={date:string;nav:number};
+export type Metrics={id:number;belowHigh:number;aboveLow:number;rsi:number;weekly:number;monthly:number;ret3m:number;ret6m:number;ret1y:number;ma20:number;ma50:number;volatility:number;trend:number;drawdown:number;weeklyRank:number;monthlyRank:number;blendedRank:number;discount:number;opportunity:number;quality:number;total:number};
+const clamp=(x:number,a=0,b=100)=>Math.max(a,Math.min(b,x));
+const pct=(a:number,b:number)=>(b?((a-b)/b)*100:0);
+function sma(v:number[],n:number){return v.length<n?NaN:v.slice(-n).reduce((s,x)=>s+x,0)/n;}
+export function rsi(v:number[],n=14){if(v.length<=n)return 50;let g=0,l=0;for(let i=v.length-n;i<v.length;i++){const d=v[i]-v[i-1];if(d>=0)g+=d;else l-=d;}if(l===0)return 100;const rs=(g/n)/(l/n);return 100-100/(1+rs);}
+function trailing(v:number[],days:number){return v.length>days?pct(v.at(-1)!,v[v.length-1-days]):0;}
+function dailyVol(v:number[]){if(v.length<30)return 0;const r=v.slice(1).map((x,i)=>Math.log(x/v[i]));const m=r.reduce((a,b)=>a+b,0)/r.length;return Math.sqrt(r.reduce((s,x)=>s+(x-m)**2,0)/r.length)*Math.sqrt(252)*100;}
+export function rawMetrics(points:Point[]){const v=points.map(p=>p.nav).filter(Number.isFinite);const current=v.at(-1)??0;const window=v.slice(-252);const high=Math.max(...window),low=Math.min(...window);const ma20=sma(v,20),ma50=sma(v,50);const drawdown=high>0?((high-current)/high)*100:0;const trend=ma50>0?((current/ma50)-1)*100:0;return {belowHigh:drawdown,aboveLow:low>0?((current-low)/low)*100:0,rsi:rsi(v),weekly:trailing(v,7),monthly:trailing(v,30),ret3m:trailing(v,63),ret6m:trailing(v,126),ret1y:trailing(v,252),ma20,ma50,volatility:dailyVol(v),trend,drawdown};}
+export function rankMetrics(all:{id:number;raw:ReturnType<typeof rawMetrics>}[]):Metrics[]{const n=all.length||1;const rank=(key:keyof ReturnType<typeof rawMetrics>,ascending=false)=>{const sorted=[...all].sort((a,b)=>{const av=Number(a.raw[key]);const bv=Number(b.raw[key]);return ascending?av-bv:bv-av;});const m=new Map<number,number>();sorted.forEach((x,i)=>m.set(x.id,i+1));return m;};const wr=rank('weekly',true),mr=rank('monthly',true),r3=rank('ret3m'),r6=rank('ret6m');return all.map(x=>{const weeklyRank=wr.get(x.id)!,monthlyRank=mr.get(x.id)!;const blendedRank=(r3.get(x.id)!+r6.get(x.id)!)/2;const rankScore=(r:number)=>(n-r+1)/n;const discount=100*(0.5*rankScore(weeklyRank)+0.5*rankScore(monthlyRank));const valuation=clamp(x.raw.belowHigh/45);const rsiSignal=clamp((55-x.raw.rsi)/25);const recovery=clamp(x.raw.trend/20);const relativeStrength=clamp(rankScore(blendedRank));const opportunity=100*(0.30*valuation+0.20*rsiSignal+0.20*recovery+0.30*relativeStrength);const quality=100*(0.45*clamp((x.raw.ret1y+20)/50)+0.30*clamp((x.raw.ret6m+20)/50)+0.25*(1-clamp(x.raw.volatility/45)));const total=0.40*opportunity+0.20*discount+0.25*quality+0.15*clamp((x.raw.ret1y+20)/50)*100;return {id:x.id,...x.raw,weeklyRank,monthlyRank,blendedRank,discount,opportunity,quality,total};});}
