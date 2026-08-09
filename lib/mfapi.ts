@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache';
+import { revalidateTag, unstable_cache } from 'next/cache';
 
 export type NavPoint = { date: string; nav: number };
 
@@ -27,7 +27,7 @@ async function fetchMfapi(code: string): Promise<NavPoint[]> {
   }
 }
 
-export function getNavHistory(code: string) {
+function cached(code: string) {
   return unstable_cache(
     () => fetchMfapi(code),
     ['mfapi-nav', code],
@@ -35,6 +35,11 @@ export function getNavHistory(code: string) {
   )();
 }
 
+export function getNavHistory(code: string) {
+  return cached(code);
+}
+
 export async function refreshNavHistory(code: string) {
-  return fetchMfapi(code);
+  revalidateTag(`mfapi-nav-${code}`);
+  return cached(code);
 }
