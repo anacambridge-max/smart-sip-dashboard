@@ -1,5 +1,6 @@
 export type Point = { date: string; nav: number };
 export type Metrics = {
+  id: number;
   belowHigh: number; aboveLow: number; rsi: number; weekly: number; monthly: number;
   ret3m: number; ret6m: number; ma20: number; ma50: number;
   weeklyRank: number; monthlyRank: number; blendedRank: number;
@@ -48,7 +49,7 @@ export function rawMetrics(points: Point[]) {
   };
 }
 
-export function rankMetrics(all: { id: number; raw: ReturnType<typeof rawMetrics> }[]) {
+export function rankMetrics(all: { id: number; raw: ReturnType<typeof rawMetrics> }[]): Metrics[] {
   const n = all.length || 1;
   const rank = (key: keyof ReturnType<typeof rawMetrics>, ascending = false) => {
     const sorted = [...all].sort((a, b) => {
@@ -76,6 +77,6 @@ export function rankMetrics(all: { id: number; raw: ReturnType<typeof rawMetrics
     const relativeStrength = clamp(rankScore(blendedRank));
     const opportunity = 100 * (0.4 * belowNorm + 0.3 * rsiSignal + 0.3 * relativeStrength);
     const total = 0.6 * opportunity + 0.4 * discount;
-    return { ...x.raw, weeklyRank: wr, monthlyRank: mr, blendedRank, discount, opportunity, total };
+    return { id: x.id, ...x.raw, weeklyRank: wr, monthlyRank: mr, blendedRank, discount, opportunity, total };
   });
 }
