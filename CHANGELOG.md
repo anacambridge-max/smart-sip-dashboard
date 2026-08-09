@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.1 — Market Data Reliability Patch
+
+### Fixed
+- Corrected the Yahoo Finance ticker for Nifty 500 to `^CRSLDX`.
+- Removed the hard-coded `INDEX NOT TRACKED` override for Nifty Smallcap 250; it now uses the live `NIFTYSMLCAP250.NS` Yahoo Finance series.
+- Market-cap cards now attempt the configured live source for all five tracked indices and only show `INDEX NOT TRACKED` when the source actually fails.
+
+### Preserved
+- Existing All Score weights remain unchanged: 35% Quality, 25% Opportunity, 15% Discount, 15% Momentum, 10% Risk.
+- Daily/Weekly/Monthly horizons, 23-fund universe, Gold/Silver MF module and Daily/Weekly/Monthly sector heatmap remain intact.
+- No broker integration, trade execution, predictive/ML scoring, guaranteed-return claims or personalized financial advice.
+
 ## 1.2.0 — Zero-Setup Stabilization
 
 ### Deployment simplification
