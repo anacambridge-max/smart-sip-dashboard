@@ -11,6 +11,7 @@ A production-style Next.js + Tailwind + Recharts mutual-fund decision-support da
 - Ranks recent weakness and relative strength across the available fund universe.
 - Includes Top-5 equity radar, weekly/monthly genuine losers, Gold/Silver mutual-fund modules, market-cap regime and sector heatmap.
 - Shows latest NAV and NAV date for available funds plus 30-day sparklines.
+- Tracks Nifty 50, Nifty Next 50, Nifty Midcap 150, Nifty Smallcap 250 and Nifty 500 using verified Yahoo Finance symbols where available.
 - Portfolio Tracker works without a database: investment log, allocation plans and step-up history are stored in browser localStorage, with CSV import/export for backup.
 - No broker or AMC order execution.
 
