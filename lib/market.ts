@@ -2,6 +2,7 @@ export type MarketInstrument={symbol:string;ticker:string;name:string;category:'
 export const sectors:MarketInstrument[]=[
 {symbol:'NIFTY50',ticker:'^NSEI',name:'Nifty 50',category:'INDEX'},
 {symbol:'NEXT50',ticker:'^NSMIDCP',name:'Nifty Next 50',category:'INDEX'},
+{symbol:'LARGEMID250',ticker:'NIFTY_LARGEMID250.NS',name:'Nifty LargeMidcap 250',category:'INDEX'},
 {symbol:'MIDCAP150',ticker:'NIFTYMIDCAP150.NS',name:'Nifty Midcap 150',category:'INDEX'},
 {symbol:'SMALLCAP250',ticker:'NIFTYSMLCAP250.NS',name:'Nifty Smallcap 250',category:'INDEX'},
 {symbol:'NIFTY500',ticker:'^CRSLDX',name:'Nifty 500',category:'INDEX'},
